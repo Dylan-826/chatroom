@@ -1,15 +1,12 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
 const ADMIN_PASSWORD = "admin123";
 const userPool = new Map();
 let globalBg = "";
-
 const htmlPage = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -121,10 +118,8 @@ const msgInput = document.getElementById("msgInput");
 const adminPwdInput = document.getElementById("adminPwdInput");
 const targetNick = document.getElementById("targetNick");
 const bgUpload = document.getElementById("bgUpload");
-
 let isAdmin = false;
 let myNickname = "";
-
 function append(text){
   const div = document.createElement("div");
   div.className = "msg-line";
@@ -132,7 +127,6 @@ function append(text){
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-
 function loadNick(){
   const saved = localStorage.getItem("chatNick");
   if(saved && saved.trim() !== ""){
@@ -142,7 +136,6 @@ function loadNick(){
     askNick();
   }
 }
-
 function askNick(){
   let n = prompt("请输入你的昵称");
   if(!n || n.trim() === ""){
@@ -153,7 +146,6 @@ function askNick(){
   localStorage.setItem("chatNick", myNickname);
   socket.emit("setNick", myNickname);
 }
-
 function changeNick(){
   let newName = prompt("输入新昵称");
   if(!newName || newName.trim() === ""){
@@ -165,22 +157,19 @@ function changeNick(){
   myNickname = newName;
   localStorage.setItem("chatNick", myNickname);
   socket.emit("setNick", myNickname);
-  append(`✅改名成功：【${oldName}】 → 【${newName}】`);
+  append("✅改名成功：【" + oldName + "】 → 【" + newName + "】");
 }
-
 function sendMsg(){
   const content = msgInput.value.trim();
   if(!content) return;
   socket.emit("chat", content);
   msgInput.value = "";
 }
-
 function loginAdmin(){
   const pwd = adminPwdInput.value.trim();
   socket.emit("reqAdminLogin", pwd);
   adminPwdInput.value = "";
 }
-
 function muteUser(){
   if(!isAdmin){
     append("⚠️你不是管理员，无法操作");
@@ -189,7 +178,6 @@ function muteUser(){
   const t = targetNick.value.trim();
   if(t) socket.emit("adminMute", t);
 }
-
 function unmuteUser(){
   if(!isAdmin){
     append("⚠️你不是管理员，无法操作");
@@ -198,7 +186,6 @@ function unmuteUser(){
   const t = targetNick.value.trim();
   if(t) socket.emit("adminUnmute", t);
 }
-
 function kickUser(){
   if(!isAdmin){
     append("⚠️你不是管理员，无法操作");
@@ -207,7 +194,6 @@ function kickUser(){
   const t = targetNick.value.trim();
   if(t) socket.emit("adminKick", t);
 }
-
 bgUpload.onchange = function(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -218,43 +204,34 @@ bgUpload.onchange = function(e){
   reader.readAsDataURL(file);
   bgUpload.value = "";
 };
-
 socket.on("setBackground", function(bg){
   document.body.style.backgroundImage = "url(" + bg + ")";
 });
-
 socket.on("adminOk", function(){
   isAdmin = true;
   append("✅管理员登录成功！现在你可以更换背景、管理用户");
 });
-
 socket.on("adminFail", function(){
   append("❌密码错误，登录管理员失败");
 });
-
 socket.on("recvMsg", function(data){
   append(data);
 });
-
 socket.on("kickNotify", function(){
   append("⚠️你已经被管理员踢出聊天室");
   socket.disconnect();
 });
-
 loadNick();
 </script>
 </body>
 </html>
 `;
-
 app.get('/', function (req, res) {
   res.send(htmlPage);
 });
-
 io.on("connection", function(socket){
   let nick = "";
   let isAdmin = false;
-
   socket.on("setNick", function(name){
     nick = name;
     userPool.set(socket.id, { nick: nick, muted: false });
@@ -262,7 +239,6 @@ io.on("connection", function(socket){
       socket.emit("setBackground", globalBg);
     }
   });
-
   socket.on("chat", function(text){
     if(!nick) return;
     const uInfo = userPool.get(socket.id);
@@ -272,7 +248,6 @@ io.on("connection", function(socket){
     }
     io.emit("recvMsg", nick + ": " + text);
   });
-
   socket.on("reqAdminLogin", function(pwd){
     if(pwd === ADMIN_PASSWORD){
       isAdmin = true;
@@ -281,7 +256,6 @@ io.on("connection", function(socket){
       socket.emit("adminFail");
     }
   });
-
   socket.on("changeBg", function(bgData){
     if(!isAdmin){
       socket.emit("recvMsg", "⚠️只有管理员才能更换背景图");
@@ -290,7 +264,6 @@ io.on("connection", function(socket){
     globalBg = bgData;
     io.emit("setBackground", globalBg);
   });
-
   socket.on("adminMute", function(targetName){
     for(const [sid, user] of userPool){
       if(user.nick === targetName){
@@ -324,12 +297,10 @@ io.on("connection", function(socket){
       }
     }
   });
-
   socket.on("disconnect", function(){
     userPool.delete(socket.id);
   });
 });
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, function(){
   console.log(`✅服务跑在端口 ${PORT}`);
