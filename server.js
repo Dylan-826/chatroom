@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PASSWORD = "Dylan001388";
 let globalBg = "";
 let messageList = [];
 // 在线用户
